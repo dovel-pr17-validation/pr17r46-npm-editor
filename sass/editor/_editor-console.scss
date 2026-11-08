@@ -1,0 +1,290 @@
+@use 'sass:color';
+@use 'sass:map';
+
+$console-icons: (info: '\E400', warn: '\E218', error: '\E368');
+$console-colors: (warn: $status-warn, error: $status-error);
+
+// bottom console
+#layout-console {
+    height: 200px;
+    border-top: 1px solid $border-primary;
+    border-left: 1px solid $border-primary;
+
+    .pcui-panel-header {
+        overflow: hidden;
+        align-items: center;
+
+        > .pcui-panel-header-title {
+            margin: 0 16px 0 0;
+            max-width: fit-content;
+        }
+
+        > .divider {
+            border: 0;
+            border-left: 1px solid $border-primary;
+            height: 100%;
+        }
+
+        > .count {
+            font-size: 12px;
+            text-align: center;
+            margin: 0;
+            padding: 0 8px;
+            color: $status-info;
+            background-color: $bcg-darkest;
+
+            &:hover {
+                color: #fff;
+                cursor: pointer;
+            }
+
+            &.disabled {
+                color: color.mix($text-darkest, $status-info, 50%);
+                background-color: $bcg-darker;
+            }
+
+            &::before {        
+                @extend .font-icon;
+
+                text-align: center;
+                margin-right: 5px;
+            }
+
+            @each $type, $icon in $console-icons {
+                &.#{$type} {
+                    &::before {
+                        content: $icon;
+                    }
+
+                    $color: map.get($console-colors, $type);
+
+                    @if $color {
+                        &.found {
+                            color: $color;
+
+                            &.disabled {
+                                color: color.mix($text-darkest, $color, 50%);
+                            }
+
+                            &:hover {
+                                color: #fff;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        > .jobs-count {
+            font-size: 12px;
+            color: #aaa;
+            margin: 0 8px;
+            pointer-events: none;
+
+            &::before {   
+                content: '\E304';
+                
+                @extend .font-icon;
+
+                text-align: center;
+                margin-right: 5px;
+            }
+        }
+    
+        > .jobs-progress {
+            width: 128px;
+            margin: 0 10px 0 0;
+            display: none;
+            transition: opacity 100ms, visibility 100ms;
+    
+            &.active {
+                display: block;
+            }
+        }
+
+        > .asset-auditor {
+            border-radius: 0;
+            margin: 0;
+            height: 32px;
+
+            &:hover {
+                background-color: $bcg-darkest;
+                box-shadow: none;
+            }
+
+            &.warn {
+                color: $status-warn;
+            }
+
+            &.error {
+                color: white;
+                background-color: $status-error;
+
+                &:hover {
+                    background-color: color.mix(black, $status-error, 25%);
+                }
+            }
+        }
+
+        > .status {
+            font-size: 12px;
+            color: #aaa;
+            border-left: 1px solid $border-primary;
+            margin-left: auto;
+            padding-left: 10px;
+            padding-right: 5px;
+            pointer-events: none;
+            user-select: none;
+
+            &.error {
+                color: $status-error;
+            }
+        }
+
+        > .version {
+            border-radius: 0;
+            margin: 0;
+            height: 32px;
+            white-space: nowrap;
+
+            &:hover {
+                background-color: $bcg-darkest;
+                box-shadow: none;
+            }
+
+            &.updated {
+                color: $text-active;
+
+                &:hover {
+                    color: color.adjust($text-active, $lightness: 10%);
+                }
+            }
+        }
+    }
+
+    .console-header {
+        padding: 0;
+        margin: 0;
+        border-top: 1px solid $border-primary;
+        border-bottom: 1px solid $border-primary;
+        background-color: $bcg-darker;
+
+        .icon-button {
+            padding: 8px 10px 6px;
+            margin: 0;
+            border-right: 1px solid $border-primary;
+
+            &:hover {
+                color: #fff;
+                background-color: $bcg-darkest;
+                cursor: pointer;
+            }
+
+            &::before {        
+                @extend .font-icon;
+        
+                font-size: 14px;
+                text-align: center;
+            }
+
+            @each $name, $icon in (clear: '\E328', copy: '\E126', history: '\E209') {
+                &.#{$name}::before {
+                    content: $icon;
+                }
+            }
+        }
+
+        .filter-text {
+            border: 0;
+            border-radius: 0;
+            margin: 4px;
+            flex: 1;
+
+            &::after {
+                font-size: 12px;
+            }
+        }
+    }
+
+    .console-body {
+        padding: 0;
+        margin: 0;
+
+        .console-item {
+            font-size: 14px;
+            border-bottom: 1px solid $bcg-dark;
+            justify-content: space-between;
+    
+            @each $type in error, warn {
+                $color: map.get($console-colors, $type);
+
+                &.#{$type} {
+                    .console-item-icon {
+                        color: $color;
+
+                        &::before {
+                            content: map.get($console-icons, $type);
+                        }
+                    }
+
+                    .console-item-text {
+                        color: $color;
+                    }
+                }
+            }
+
+            .console-item-icon {
+                min-width: fit-content;
+
+                &::before {
+                    content: '\E400';
+            
+                    @extend .font-icon;
+            
+                    font-size: 14px;
+                    text-align: center;
+                }
+            }
+
+            .console-item-counter {
+                color: $bcg-darker;
+                background-color: #b1b8ba;
+                font-weight: bold;
+                font-size: 12px;
+                text-align: center;
+                height: 17px;
+                min-width: 17px;
+                padding: 2px 5px 0;
+                margin: auto 0;
+                border-radius: 10px;
+            }
+
+            .console-item-text {
+                word-wrap: break-word;
+                margin: 8px 0;
+                margin-right: auto;
+
+                &.link:hover {
+                    cursor: pointer;
+                    text-decoration: underline;
+                }
+            }
+    
+            .console-item-time {
+                font-size: 12px;
+                text-align: right;
+                min-width: fit-content;
+                width: 50px;
+                margin: auto 10px auto 5px;
+            }
+        }
+
+        .console-show {
+            display: flex;
+            color: color.adjust($text-secondary, $alpha: -0.5);
+            font-size: 12px;
+            justify-content: center;
+            margin: 10px;
+        }
+    }
+}

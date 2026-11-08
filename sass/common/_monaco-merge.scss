@@ -1,0 +1,21 @@
+.monaco-editor {
+    .dst-branch {
+        background: rgba(#0b3b76, 0.5);
+    }
+
+    .src-branch {
+        background: rgba(#15515e, 0.5);
+    }
+
+    .diff-overlay-hunk {
+        background: #324447;
+    }
+
+    .diff-overlay-add {
+        background: rgb(0 128 0 / 20%);
+    }
+
+    .diff-overlay-remove {
+        background: rgb(255 0 0 / 20%);
+    }
+}

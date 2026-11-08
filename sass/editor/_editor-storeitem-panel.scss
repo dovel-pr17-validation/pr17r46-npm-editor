@@ -1,0 +1,212 @@
+.storeitem-root-panel {
+    height: 80%;
+    width: 80%;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    background-color: $bcg-primary;
+    z-index: 1000;
+
+    .storeitem-tabs {
+        display: flex;
+        flex-direction: row;
+        font-size: 16px;
+        font-weight: bold;
+        height: 34px;
+        margin-bottom: 6px;
+    
+        :hover {
+            color: white;
+            text-decoration: underline;
+            cursor: pointer;
+        } 
+    
+        .clicked {
+            color: white;
+            text-decoration: underline;
+        }
+    }
+    
+    .item-description {
+        font-weight: 400;
+        font-size: 14px;
+        padding-left: 0;
+        padding-bottom: 15px;
+        max-height: calc(100% - 200px);
+        word-wrap: break-word;
+        overflow-y: auto;
+    }
+    
+    .item-author-label {
+        padding-top: 10px;
+        font-size: 14px;
+    }      
+    
+    .item-license {
+        font-weight: 400;
+        font-size: 14px;
+        word-wrap: break-word;
+    }   
+
+    .storeitem-top-panel {
+        position: relative;
+        max-height: 80px;
+        min-height: 80px;
+        padding-bottom: 32px;
+    }
+
+    .return-button {
+        position: absolute;
+        padding-right: 5px;
+        font-size: 20px;
+        left: 17px;
+        top: 33px;
+        color: white;
+        background-color: $bcg-primary;
+        border: none;
+    }
+
+    .storeitem-name {
+        position: absolute;
+        padding-right: 5px;
+        font-size: 20px;
+        left: 56px;
+        top: 35px;
+        color: white;
+    }
+
+    .import-button,
+    .viewer-button {
+        position: absolute;
+        height: 26px;
+        width: 206px;
+        border: none;
+        color: #fff;
+        font-weight: 800;
+        margin-left: 0;
+    }
+
+    .import-button {
+        right: 32px;
+        top: 34px;
+        background-color: $text-active;
+
+        &:hover {
+            color: $text-active;
+            background-color: $text-primary;
+        }
+    }
+
+    .viewer-button {
+        right: 254px;
+        top: 34px;
+    }
+
+    .storeitem-content {
+        height: calc(100% - 112px);
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+    }
+
+    .storeitem-preview {
+        width: 100%;
+        margin-left: 15px;
+        margin-right: 15px;
+        margin-bottom: 15px;
+        background-color: #29363b;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+    }
+
+    .code-preview {
+        height: 100%;
+        overflow: auto;
+        background-color: $bcg-darkest;
+    }
+
+    .storeitem-data {
+        padding: 15px;
+        padding-top: 0;
+        padding-left: 0;
+        width: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .storeitem-data-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        margin-bottom: 26px;
+    }
+
+    .storeitem-stats {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        bottom: 0;
+        padding-left: 0;
+        min-width: 90%;
+        padding-bottom: 30px;
+    }
+
+    .storeitem-assets {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 16px;
+        min-width: 95%;
+    }
+
+    // stat and asset names in one column, values on the right
+    .storeitem-stats,
+    .storeitem-assets {
+        > .pcui-label-group > .pcui-label:first-child {
+            width: 188px;
+        }
+    }
+
+    .data-label {
+        position: absolute;
+        right: 0;
+        font-size: 12px;
+    }
+
+    .pcui-label-group {
+        height: 7px;
+    }
+
+    // an asset type glyph before each asset's name
+    @each $cls, $glyph in (assets-name-texture: '\E413', assets-name-3d: '\E187', assets-name-script: '\E392', assets-name-font: '\E227', assets-name-template: '\E190', assets-name: '\E209') {
+        .#{$cls} {
+            width: 100%;
+
+            @include store-icon($glyph);
+        }
+    }
+
+    .tag-name {
+        width: 100%;
+        margin: 0;
+
+        &:hover {
+            color: $text-active;
+            text-decoration: underline;
+            cursor: pointer;
+
+            &::before {
+                color: $text-active;
+            }
+        }
+
+        @include store-icon('\E208');
+    }
+}

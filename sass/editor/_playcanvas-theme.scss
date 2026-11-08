@@ -1,0 +1,41 @@
+/* Theme. Derived from Monokai by noformnocontent http://nn.mit-license.org/ */
+
+// only the scopes highlight.js emits for the registered javascript grammar are styled
+
+.hljs {
+    display: block;
+    padding: 0.5em;
+    background: #1d292c;
+    color: #f8f8f2;
+}
+
+.hljs-keyword {
+    color: #77bef3;
+}
+
+.hljs-function .hljs-keyword {
+    color: #fff;
+}
+
+.hljs-variable {
+    color: #ff842f;
+}
+
+.hljs-string {
+    color: #f1c40f;
+}
+
+.hljs-comment {
+    color: #779296;
+}
+
+.hljs-number,
+.hljs-regexp,
+.hljs-literal,
+.hljs-title,
+.hljs-function,
+.hljs-params,
+.hljs-subst,
+.hljs-built_in {
+    color: #f8f8f2;
+}

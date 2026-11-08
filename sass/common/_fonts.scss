@@ -1,0 +1,28 @@
+@font-face {
+    font-family: 'Proxima Nova Regular';
+    src: url('../static/fonts/proxima_nova_regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Proxima Nova Bold';
+    src: url('../static/fonts/proxima_nova_bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+// extend the placeholders: pcui defines `.font-*` too, so extending the class emits each selector in both rules
+.font-regular,
+%font-regular {
+    font-family: 'Proxima Nova Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    font-style: normal;
+}
+
+.font-bold,
+%font-bold {
+    font-family: 'Proxima Nova Bold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-style: normal;
+}

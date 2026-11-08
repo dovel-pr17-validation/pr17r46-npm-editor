@@ -1,0 +1,124 @@
+import type { Observer } from '@playcanvas/observer';
+
+import { buildQueryUrl } from '@/common/utils';
+import { WorkerClient } from '@/core/worker/worker-client';
+
+editor.once('load', () => {
+    const activeWorkers = new Map();
+
+    // without the branch the file api serves the main branch's file
+    const fileUrl = (asset: Observer) =>
+        buildQueryUrl(`${config.url.api}/assets/${asset.get('id')}/file/${asset.get('file.filename')}`, {
+            branchId: config.self.branch.id
+        });
+
+    editor.method('assets:model:unwrap', (asset, args, callback) => {
+        const assetId = asset.get('id');
+
+        if (typeof args === 'function') {
+            callback = args;
+        }
+        if (typeof args !== 'object') {
+            args = {};
+        }
+
+        args = args || {};
+
+        if (asset.get('type') !== 'model' || !asset.has('file.filename')) {
+            callback?.(new Error('A model asset with a source file is required.'));
+            return;
+        }
+        if (activeWorkers.has(assetId)) {
+            callback?.(new Error(`Model asset ${assetId} is already being unwrapped.`));
+            return;
+        }
+
+        const filename = asset.get('file.filename');
+
+        // N.B. Update to use frontend URL
+        const workerClient = new WorkerClient(`${config.url.frontend}js/assets-unwrap.worker.js`);
+        activeWorkers.set(assetId, { worker: workerClient, callback });
+
+        workerClient.once('ready', () => {
+            workerClient.on('start', (data, area) => {
+                // save area
+                asset.set('data.area', area);
+
+                // upload blob as dds
+                editor.call(
+                    'assets:uploadFile',
+                    {
+                        file: new Blob([JSON.stringify(data)], { type: 'application/json' }),
+                        name: filename,
+                        asset: asset,
+                        type: 'model'
+                    },
+                    (err) => {
+                        // remove from unwrapping list
+                        workerClient.stop();
+                        activeWorkers.delete(assetId);
+
+                        // render
+                        editor.call('viewport:render');
+                        // callback
+                        callback?.(err, asset);
+                        // emit global event
+                        editor.emit('assets:model:unwrap', asset);
+                    }
+                );
+            });
+
+            workerClient.on('progress', (val) => {
+                editor.emit(`assets:model:unwrap:progress:${assetId}`, val);
+                editor.emit('assets:model:unwrap:progress', asset, val);
+            });
+
+            workerClient.send('start', fileUrl(asset), args.padding || 2.0);
+        });
+
+        workerClient.on('error', (err) => {
+            callback?.(err);
+            workerClient.stop();
+            activeWorkers.delete(assetId);
+        });
+
+        workerClient.start();
+    });
+
+    editor.method('assets:model:unwrap:cancel', (asset) => {
+        const assetId = asset.get('id');
+        const active = activeWorkers.get(assetId);
+
+        if (!active) {
+            return false;
+        }
+        active.worker.stop();
+        activeWorkers.delete(assetId);
+        active.callback?.(new Error(`Model asset ${assetId} unwrap was cancelled.`));
+        return true;
+    });
+
+    editor.method('assets:model:area', (asset, callback) => {
+        if (asset.get('type') !== 'model' || !asset.has('file.filename')) {
+            return;
+        }
+
+        const workerClient = new WorkerClient(`${config.url.frontend}js/assets-unwrap.worker.js`);
+        workerClient.once('ready', () => {
+            workerClient.once('area', (data, area) => {
+                workerClient.stop();
+                asset.set('data.area', area || null);
+                callback?.(null, asset, area || null);
+            });
+
+            workerClient.send('area', fileUrl(asset));
+        });
+
+        workerClient.on('error', (err) => {
+            workerClient.stop();
+            callback?.(err);
+        });
+
+        workerClient.start();
+    });
+});

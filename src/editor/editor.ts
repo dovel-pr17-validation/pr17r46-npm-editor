@@ -1,0 +1,173 @@
+import { backend } from '@/common/backend';
+import { Editor } from '@/common/editor';
+import type { EditorMethods } from '@/common/editor';
+import { setSentrySource, setSentryTags, setSentryUser } from '@/common/sentry';
+import { MERGE_STATUS_APPLY_STARTED, MERGE_STATUS_AUTO_STARTED, MERGE_STATUS_READY_FOR_REVIEW } from '@/core/constants';
+import * as api from '@/editor-api';
+
+import { config } from './config';
+import { inPlace } from './pickers/picker-url';
+
+class MainEditor extends Editor<EditorMethods> {
+    constructor() {
+        super('Main Editor');
+
+        this.once('loaded', () => {
+            this.call('status:text', 'starting');
+            this.emit('start');
+
+            this.call('status:text', 'ready');
+
+            // if no project loaded, open CMS
+            if (!config.project.id) {
+                this.call('picker:project:cms');
+            }
+
+            // if there is a merge in progress for our branch
+            const merge = config.self.branch.merge;
+            if (merge) {
+                // if this user started it then show the conflict manager
+                // otherwise if another user started then show the merge in progress overlay
+                if (merge.user.id === config.self.id) {
+                    switch (merge.mergeProgressStatus) {
+                        case MERGE_STATUS_AUTO_STARTED:
+                        case MERGE_STATUS_APPLY_STARTED:
+                            this.call('picker:conflictManager');
+                            break;
+                        case MERGE_STATUS_READY_FOR_REVIEW:
+                            this.call('picker:diffManager');
+                            break;
+                        default:
+                            if (merge.hasConflicts) {
+                                this.call('picker:conflictManager');
+                            } else {
+                                this.call('picker:diffManager');
+                            }
+                            break;
+                    }
+                } else {
+                    this.call('picker:versioncontrol:mergeOverlay');
+                }
+            } else {
+                if (config.scene && !config.scene.id) {
+                    // if no scene is loaded
+                    this.call('scenes:list', (items: { uniqueId: string }[]) => {
+                        if (items.length === 1) {
+                            this.call('scene:load', items[0].uniqueId);
+                        } else if (!this.call('picker:project:selected')) {
+                            // open picker if no scene is loaded, unless the url opened a section; it's the page's first view
+                            inPlace(() => this.call('picker:scene'));
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    protected override _registerApi() {
+        super._registerApi();
+
+        // Initialize API globals - order matters
+        api.globals.history = new api.History();
+        api.globals.selection = new api.Selection();
+        api.globals.schema = new api.Schema(config.schema);
+        api.globals.realtime = backend().realtime;
+        api.globals.settings = new api.Settings();
+        api.globals.messenger = new api.Messenger(backend().messenger);
+        api.globals.assets = new api.Assets({ autoSubscribe: true });
+        api.globals.entities = new api.Entities();
+        api.globals.jobs = new api.Jobs();
+        api.globals.entityJobs = !!backend().entityJobs;
+        api.globals.clipboard = new api.Clipboard('playcanvas_editor_clipboard');
+        api.globals.confirmFn = (text, options) => {
+            return new Promise((resolve) => {
+                let resolved = false;
+                this.call(
+                    'picker:confirm',
+                    text,
+                    () => {
+                        if (resolved) {
+                            return;
+                        }
+                        resolved = true;
+                        resolve(true);
+                    },
+                    options
+                );
+
+                this.once('picker:confirm:close', () => {
+                    if (resolved) {
+                        return;
+                    }
+                    resolved = true;
+                    resolve(false);
+                });
+            });
+        };
+
+        // asset upload completed callback (clear progress)
+        this.api.globals.assets.defaultUploadCompletedCallback = (uploadId: string, _asset: unknown) => {
+            this.call('status:job', `asset-upload:${uploadId}`);
+        };
+        // asset upload progress callback
+        this.api.globals.assets.defaultUploadProgressCallback = (uploadId: string, progress: number) => {
+            this.call('status:job', `asset-upload:${uploadId}`, progress);
+        };
+        // asset upload error callback (clear progress)
+        this.api.globals.assets.defaultUploadErrorCallback = (uploadId: number, _err: Error) => {
+            this.call('status:job', `asset-upload:${uploadId}`);
+        };
+
+        // set parse script callback
+        this.api.globals.assets.parseScriptCallback = (asset: { observer: unknown }) => {
+            return new Promise((resolve, reject) => {
+                this.call(
+                    'scripts:parse',
+                    asset.observer,
+                    (
+                        err: unknown,
+                        result: {
+                            scripts?: Record<string, { attributesInvalid?: string[] }>;
+                            scriptsInvalid?: string[];
+                        }
+                    ) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+
+                        // a parse with errors isn't saved, so callers would wait for scripts that never arrive
+                        const invalid = [
+                            ...(result.scriptsInvalid ?? []),
+                            ...Object.values(result.scripts ?? {}).flatMap((script) => script.attributesInvalid ?? [])
+                        ];
+                        if (invalid.length) {
+                            reject(new Error(`Script parsing failed: ${invalid.join('; ')}`));
+                        } else {
+                            resolve(Object.keys(result.scripts || {}));
+                        }
+                    }
+                );
+            });
+        };
+    }
+}
+
+// editor
+window.editor = new MainEditor();
+
+setSentryUser(config.self?.id);
+setSentryTags({
+    user_id: config.self?.id,
+    project_id: config.project?.id,
+    scene_id: config.scene?.id || -1,
+    branch_id: config.self?.branch?.id,
+    branch_name: config.self?.branch?.name,
+    branch_is_main: !!config.self?.branch?.id && config.self.branch.id === config.project?.masterBranch,
+    merge_in_progress: !!config.self?.branch?.merge,
+    plan: config.self?.plan?.type,
+    owner_plan: config.owner?.plan?.type,
+    engine_version: config.engineVersions?.current?.version
+});
+
+setSentrySource(config.url?.engine, config.url?.frontend);

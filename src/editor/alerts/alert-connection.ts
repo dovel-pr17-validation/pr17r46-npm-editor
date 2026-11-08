@@ -1,0 +1,257 @@
+import { Overlay } from '@playcanvas/pcui';
+
+import { createLog } from '@/common/sentry';
+import { formatter as f } from '@/common/utils';
+import { config } from '@/editor/config';
+import {
+    docRejection,
+    isSchemaRejection,
+    schemaRejectionMessage,
+    sceneRejection,
+    settingsRejection
+} from '@/editor/realtime/realtime-error';
+import type { OpComponent } from '@/editor/realtime/realtime-error';
+
+const log = createLog('<PATH>');
+
+editor.once('load', () => {
+    let timeout;
+    let viewportError = false;
+    let messengerLost = false;
+
+    const overlay = new Overlay({
+        class: 'connection-overlay',
+        clickable: false,
+        transparent: false,
+        hidden: true
+    });
+
+    const root = editor.call('layout.root');
+    root.append(overlay);
+
+    // icon
+    const icon = document.createElement('div');
+    icon.classList.add('connection-icon');
+    icon.classList.add('error');
+    overlay.domContent.appendChild(icon);
+
+    // content
+    const content = document.createElement('div');
+    content.classList.add('connection-content');
+    overlay.domContent.appendChild(content);
+
+    editor.on('realtime:connected', () => {
+        clearErrorGrace();
+
+        if (viewportError || messengerLost) {
+            return;
+        }
+
+        overlay.hidden = true;
+    });
+
+    // asset, checkpoint and job updates come over the messenger, so the editor goes stale without it
+    editor.on('messenger:cannotConnect', () => {
+        if (viewportError) {
+            return;
+        }
+
+        messengerLost = true;
+        clearTimeout(timeout);
+        content.innerHTML = 'Lost connection to the server. Please refresh the editor.';
+        overlay.hidden = false;
+    });
+
+    editor.on('realtime:disconnected', () => {
+        if (messengerLost) {
+            return;
+        }
+
+        content.innerHTML = 'You have been disconnected from the server.';
+        overlay.hidden = false;
+    });
+
+    editor.on('realtime:nextAttempt', (time) => {
+        if (messengerLost) {
+            return;
+        }
+
+        function setText(remaining: number) {
+            content.innerHTML = `Disconnected. Reconnecting in ${remaining} seconds...`;
+        }
+
+        let before = new Date();
+
+        function renderTime() {
+            const now = new Date();
+            const elapsed = now.getTime() - before.getTime();
+            before = now;
+            time -= Math.round(elapsed / 1000);
+            if (time < 0) {
+                time = 0;
+            } else {
+                timeout = setTimeout(renderTime, 1000);
+            }
+
+            setText(time);
+        }
+
+        setText(time);
+
+        timeout = setTimeout(renderTime, 1000);
+    });
+
+    editor.on('realtime:connecting', (attempt) => {
+        clearErrorGrace();
+
+        if (viewportError || messengerLost) {
+            return;
+        }
+
+        overlay.hidden = true;
+        clearTimeout(timeout);
+    });
+
+    editor.on('realtime:cannotConnect', () => {
+        overlay.hidden = false;
+        clearTimeout(timeout);
+        content.innerHTML = 'Cannot connect to the server. Please try again later.';
+    });
+
+    const ERROR_GRACE_MS = 3000;
+    let errorGraceTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const clearErrorGrace = () => {
+        if (errorGraceTimeout) {
+            clearTimeout(errorGraceTimeout);
+            errorGraceTimeout = null;
+        }
+    };
+
+    const onError = function (err: unknown) {
+        console.warn('realtime error:', err);
+
+        // debounce — only one grace period at a time
+        if (errorGraceTimeout) {
+            return;
+        }
+
+        errorGraceTimeout = setTimeout(() => {
+            errorGraceTimeout = null;
+
+            // if connection recovered during grace period, skip the fatal overlay
+            const conn = editor.call('realtime:connection');
+            if (conn?.state === 'connected') {
+                console.warn('realtime error suppressed — connection recovered during grace period');
+                return;
+            }
+
+            content.innerHTML = 'Error while saving changes. Please refresh the editor.';
+            overlay.hidden = false;
+        }, ERROR_GRACE_MS);
+    };
+
+    editor.on('viewport:error', (err) => {
+        viewportError = true;
+        console.error(err);
+        console.trace();
+        content.innerHTML =
+            'Failed creating WebGL Context.<br />Please check <a href="http://webglreport.com/" target="_blank">WebGL Report</a> and report to <a href="http://forum.playcanvas.com/" target="_blank">Forum</a>.';
+        overlay.hidden = false;
+    });
+
+    // a schema-validation rejection reverts the op but leaves the connection healthy, so the
+    // connection-loss handler would suppress it during its grace period — surface it instead
+    const onRealtimeError = (err: unknown) => {
+        // rejected locally by the realtime connection, so the change was reverted and the editor still syncs
+        if ((err as { code?: string })?.code === 'ERR_OP_TOO_LARGE') {
+            console.error('realtime change too large to save and reverted:', err);
+            editor.call('status:error', 'Change too large to save. Try editing fewer entities at once.');
+            return;
+        }
+        if (isSchemaRejection(err)) {
+            console.error('realtime change rejected and reverted:', err);
+            editor.call('status:error', schemaRejectionMessage(err));
+            return;
+        }
+        onError(err);
+    };
+
+    // the op pinpoints the refused change, so log it to the editor console rather than the status bar
+    const warnRejection = (err: unknown, op: OpComponent[], msg: string, select: () => void) => {
+        const [uiMsg, verboseMsg] = f.parse(msg);
+        // the message and op are what matter; logging the error itself only adds a ShareDB stack
+        console.warn(`${uiMsg} (${err instanceof Error ? err.message : err}):`, op);
+        editor.call('console:warn', uiMsg, verboseMsg, select);
+    };
+
+    editor.on('realtime:error', onRealtimeError);
+    editor.on('realtime:scene:error', (err, op?: OpComponent[]) => {
+        // this should be ok...
+        if (/Exceeded max submit retries/.test(err)) {
+            console.info(err);
+            return;
+        }
+
+        if (op?.length && isSchemaRejection(err)) {
+            const { entity, msg } = sceneRejection(err, op, (id) => editor.call('entities:get', id)?.get('name'));
+            warnRejection(err, op, msg, () => {
+                const target = entity && editor.call('entities:get', entity);
+                if (target) {
+                    editor.call('selector:set', 'entity', [target]);
+                }
+            });
+            return;
+        }
+        onRealtimeError(err);
+    });
+    // settings.ts already logs the devtools line, as it also runs in the launcher and code editor
+    editor.on('realtime:settings:error', (err, op: OpComponent[], name: string) => {
+        const [uiMsg, verboseMsg] = f.parse(settingsRejection(err, op, name));
+        editor.call('console:warn', uiMsg, verboseMsg, () => {
+            editor.call('selector:set', 'editorSettings', [editor.call('settings:projectUser')]);
+        });
+    });
+    editor.on('realtime:userdata:error', (err) => {
+        log.error(err);
+    });
+    editor.on('realtime:assets:error', (err, op?: OpComponent[], uniqueId?: number) => {
+        if (op?.length && uniqueId !== undefined && isSchemaRejection(err)) {
+            const name = editor.call('assets:getUnique', uniqueId)?.get('name');
+            warnRejection(
+                err,
+                op,
+                docRejection(err, op, name ? `${name}<< (${uniqueId})>>` : `asset ${uniqueId}`),
+                () => {
+                    const target = editor.call('assets:getUnique', uniqueId);
+                    if (target) {
+                        editor.call('selector:set', 'asset', [target]);
+                    }
+                }
+            );
+            return;
+        }
+        onRealtimeError(err);
+    });
+
+    editor.on('messenger:scene.delete', (data) => {
+        if (data.scene.branchId !== config.self.branch.id) {
+            return;
+        }
+
+        if (config.scene.id && data.scene.id === parseInt(config.scene.id, 10)) {
+            content.innerHTML = 'This scene has been deleted.';
+            overlay.hidden = false;
+        }
+    });
+
+    editor.on('scene:unload', () => {
+        clearErrorGrace();
+
+        if (viewportError || messengerLost) {
+            return;
+        }
+
+        overlay.hidden = true;
+    });
+});

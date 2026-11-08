@@ -1,0 +1,77 @@
+name: Test Suite / Run
+
+on:
+    pull_request:
+        branches: [main, 'release-*']
+        types: [labeled]
+    workflow_dispatch:
+        inputs:
+            env:
+                description: 'Environment to run tests against'
+                required: true
+                type: environment
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    test:
+        name: Test Suite
+        # playwright can't install chromium on ubuntu 26.04 yet, which ubuntu-latest now resolves to
+        runs-on: ubuntu-24.04
+        environment:
+            name: ${{ inputs.env || 'dev' }}
+        if: "${{ github.repository == 'playcanvas/editor' && ((github.event.label.name == 'run: test-suite' && github.actor == 'kpal81xd') || github.event_name == 'workflow_dispatch') }}"
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v7
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 26.x
+                  cache: npm
+                  cache-dependency-path: |
+                      package-lock.json
+                      test-suite/package-lock.json
+
+            - name: Install dependencies
+              run: |
+                  npm ci
+                  npm ci --prefix test-suite
+
+            - name: Cache Chromium
+              uses: actions/cache@v6
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('test-suite/package-lock.json') }}
+
+            - name: Install Chromium
+              working-directory: test-suite
+              run: npx playwright install --with-deps chromium
+
+            - name: Build candidate frontend
+              run: npm run build
+
+            - name: Run tests
+              working-directory: test-suite
+              env:
+                  PC_HOST: ${{ secrets.PC_HOST }}
+                  PC_LOGIN_HOST: ${{ secrets.PC_LOGIN_HOST }}
+                  PC_LAUNCH_HOST: ${{ secrets.PC_LAUNCH_HOST }}
+                  PC_LOCAL_FRONTEND: 'true'
+                  PC_COOKIE_NAME: ${{ secrets.PC_COOKIE_NAME }}
+                  PC_COOKIE_VALUE: ${{ secrets.PC_COOKIE_VALUE }}
+                  PC_HEADER_NAME: ${{ secrets.PC_HEADER_NAME }}
+                  PC_HEADER_VALUE: ${{ secrets.PC_HEADER_VALUE }}
+              run: npm test
+
+            - name: Upload test results
+              uses: actions/upload-artifact@v7
+              if: always()
+              with:
+                  name: test-results
+                  path: |
+                      test-suite/test-results
+                      test-suite/playwright-report
+                  retention-days: 5

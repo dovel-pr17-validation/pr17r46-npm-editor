@@ -1,0 +1,168 @@
+import * as observer from '@playcanvas/observer';
+
+import { RelayServer } from '@/editor/relay/relay-server';
+import * as api from '@/editor-api';
+
+import { initBackend } from './backend';
+import { Caller } from './caller';
+import { Messenger } from './messenger';
+
+type EditorMethods = {
+    load: () => void;
+    loaded: () => void;
+    visibility: () => boolean;
+} & Record<string, (...args: any[]) => any>;
+
+class Editor<T extends EditorMethods> extends Caller<T> {
+    /**
+     * Exposed API for the Editor.
+     */
+    api: typeof api = api;
+
+    /**
+     * Exposed Observer for the Editor.
+     */
+    observer: typeof observer = observer;
+
+    /**
+     * Whether the Editor is a code editor.
+     */
+    isCodeEditor = false;
+
+    /**
+     * Whether the Editor project is using engine v2.
+     */
+    projectEngineV2: boolean =
+        'settings' in config.project ? ((config.project.settings as Record<string, any>)?.engineV2 ?? false) : false;
+
+    /**
+     * Editor API history global
+     */
+    history: typeof api.globals.history;
+
+    /**
+     * Editor API selection global
+     */
+    selection: typeof api.globals.selection;
+
+    /**
+     * Editor API schema global
+     */
+    schema: typeof api.globals.schema;
+
+    /**
+     * Editor API realtime global
+     */
+    realtime: typeof api.globals.realtime;
+
+    /**
+     * Editor API settings global
+     */
+    settings: typeof api.globals.settings;
+
+    /**
+     * Editor API messenger global
+     */
+    messenger: typeof api.globals.messenger;
+
+    /**
+     * Editor API assets global
+     */
+    assets: typeof api.globals.assets;
+
+    /**
+     * Editor API entities global
+     */
+    entities: typeof api.globals.entities;
+
+    /**
+     * Editor API jobs global
+     */
+    jobs: typeof api.globals.jobs;
+
+    /**
+     * Editor API clipboard global
+     */
+    clipboard: typeof api.globals.clipboard;
+
+    /**
+     * @param name - The name of the Editor.
+     */
+    constructor(name?: string) {
+        super(name === undefined ? 'Editor' : name);
+
+        this._registerVisibility();
+        this._registerLoad();
+        this._registerApi();
+
+        // set globals on editor
+        this.history = api.globals.history;
+        this.selection = api.globals.selection;
+        this.schema = api.globals.schema;
+        this.realtime = api.globals.realtime;
+        this.settings = api.globals.settings;
+        this.messenger = api.globals.messenger;
+        this.assets = api.globals.assets;
+        this.entities = api.globals.entities;
+        this.jobs = api.globals.jobs;
+        this.clipboard = api.globals.clipboard;
+    }
+
+    /**
+     * Register the visibility method and event.
+     */
+    private _registerVisibility() {
+        this.method('visibility', () => {
+            return document.visibilityState === 'visible';
+        });
+
+        document.addEventListener(
+            'visibilitychange',
+            () => {
+                this.emit(document.visibilityState);
+                this.emit('visibility', document.visibilityState === 'visible');
+            },
+            false
+        );
+    }
+
+    /**
+     * Register the load and loaded events.
+     */
+    private _registerLoad() {
+        document.addEventListener(
+            'DOMContentLoaded',
+            () => {
+                this.emit('load');
+                queueMicrotask(() => this.emit('loaded'));
+            },
+            false
+        );
+    }
+
+    /**
+     * Register the API for the Editor.
+     */
+    protected _registerApi() {
+        // Initialize API globals - order matters
+        api.globals.accessToken = 'accessToken' in config ? config.accessToken : '';
+        api.globals.projectId = config.project.id;
+        api.globals.branchId = config.self.branch.id;
+        api.globals.apiUrl = config.url.api;
+        api.globals.homeUrl = config.url.home;
+        api.globals.rest = new api.Rest();
+
+        // the page's backend services are built on the configured REST client
+        initBackend(
+            api.globals.rest,
+            {
+                realtime: () => new api.Realtime(),
+                messenger: (transport) => new Messenger(transport),
+                relay: (transport) => new RelayServer(transport)
+            },
+            config.unsupported
+        );
+    }
+}
+
+export { type EditorMethods, Editor };

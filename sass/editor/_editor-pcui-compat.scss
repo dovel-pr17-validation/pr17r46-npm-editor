@@ -1,0 +1,455 @@
+.fixedFont,
+%field-font {
+    font-family: inconsolatamedium, Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+.noSelect {
+    user-select: none;
+}
+
+$disabled-opacity: 0.4 * 100%;
+
+@font-face {
+    font-family: inconsolatamedium;
+    src: url('../static/fonts/Inconsolata-webfont.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.ui-curve-field {
+    display: inline-block;
+    width: 128px;
+    height: 22px;
+    vertical-align: top;
+    transition: opacity 100ms;
+    cursor: pointer;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+        cursor: default;
+    }
+}
+
+.ui-panel {
+    position: relative;
+
+    &.disabled {
+        > header {
+            color: #999;
+        }
+    }
+
+    &.noHeader {
+        > header {
+            display: none;
+        }
+    }
+
+    > header {
+        height: 32px;
+        line-height: 32px;
+        padding: 0 0 0 8px;
+        white-space: nowrap;
+        cursor: default;
+
+        > span.title {
+            float: left;
+        }
+    }
+
+    > .content {
+        position: relative;
+    }
+}
+
+.ui-overlay {
+    position: absolute;
+    width: auto;
+    height: auto;
+    inset: 0;
+    z-index: 101;
+    transition: opacity 100ms, visibility 100ms;
+
+    &.hidden {
+        display: block;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    > .content {
+        position: relative;
+        transition: width 100ms, height 100ms, margin-left 100ms, margin-top 100ms;
+        box-shadow: 7px 7px 7px rgb(0 0 0 / 15%);
+    }
+}
+
+.ui-list {
+    @extend .noSelect;
+
+    list-style: none;
+    padding: 0;
+    font-size: 11px;
+    overflow: hidden;
+    min-height: 22px;
+    border: 1px solid #1a1a1a;
+    transition: opacity 100ms;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+    }
+
+    &.selectable {
+        > .ui-list-item {
+            cursor: pointer;
+
+            &.disabled {
+                &:hover {
+                    background-color: transparent;
+                }
+            }
+        }
+    }
+}
+
+.ui-list-item {
+    @extend %field-font;
+
+    cursor: default;
+    padding: 0 8px;
+    height: 22px;
+    font-size: 12px;
+    line-height: 22px;
+    border-bottom: 1px solid #1a1a1a;
+    transition: opacity 100ms;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &.disabled {
+        cursor: default;
+        opacity: $disabled-opacity;
+
+        &.selected {
+            background-color: #07f;
+        }
+    }
+}
+
+.ui-tooltip {
+    position: absolute;
+    z-index: 301;
+    overflow: hidden;
+    white-space: nowrap;
+
+    > .content {
+        padding: 4px 8px;
+        background-color: #000;
+        color: #07f;
+    }
+
+    &.disabled {
+        display: none;
+    }
+}
+
+.ui-label {
+    display: inline-block;
+    line-height: 22px;
+    vertical-align: bottom;
+    transition: opacity 100ms;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+    }
+}
+
+// attribute text drawn over a field (placeholder / proxy)
+@mixin field-hint($attr) {
+    @extend %field-font;
+
+    content: attr($attr);
+    position: absolute;
+    top: 0;
+    padding: 0 8px;
+    line-height: 22px;
+    font-size: 12px;
+    font-weight: 100;
+    white-space: nowrap;
+}
+
+// placeholder
+.ui-label[placeholder] {
+    position: relative;
+
+    &::after {
+        @include field-hint(placeholder);
+
+        right: 0;
+        font-family: Helvetica;
+        pointer-events: none;
+    }
+}
+
+// legacy input field wrapping a native $tag.field
+@mixin legacy-field($root, $tag, $height) {
+    #{$root} {
+        display: inline-block;
+        box-sizing: border-box;
+        width: 130px;
+        height: $height;
+        vertical-align: top;
+        transition: opacity 100ms;
+
+        &.disabled {
+            opacity: $disabled-opacity;
+        }
+
+        > #{$tag}.field {
+            @extend %field-font;
+
+            width: calc(100% - 16px);
+            height: 100%;
+            padding: 0 8px;
+            line-height: 22px;
+            background: transparent;
+            border: none;
+
+            @content;
+        }
+    }
+
+    // active/focused
+    #{$root}.active > #{$tag}.field,
+    #{$root} > #{$tag}.field:focus {
+        outline: none;
+        border-color: #7f7;
+        box-shadow: 0 0 4px #7f7;
+    }
+
+    #{$root}[placeholder] {
+        position: relative;
+
+        &::after {
+            @include field-hint(placeholder);
+
+            right: 0;
+            pointer-events: none;
+        }
+
+        &:hover,
+        &.focus {
+            &::after {
+                content: none;
+            }
+        }
+    }
+
+    #{$root}[proxy] {
+        position: relative;
+
+        &::before {
+            @include field-hint(proxy);
+
+            left: 0;
+            color: #999;
+        }
+
+        &:hover,
+        &.focus {
+            &::before {
+                content: none;
+            }
+        }
+    }
+
+    #{$root}[value] {
+        &::before {
+            content: none;
+        }
+    }
+}
+
+@include legacy-field('.ui-number-field', input, 24px);
+
+// smaller padding for placeholders in vec4 fields
+// because they are too small
+.ui-panel.field-vec4 {
+    .ui-number-field[placeholder]::after {
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+}
+
+@include legacy-field('.ui-text-field', input, 24px);
+
+@include legacy-field('.ui-textarea-field', textarea, 48px) {
+    resize: none;
+}
+
+.ui-slider {
+    @extend .noSelect;
+
+    display: inline-block;
+    height: 24px;
+    cursor: pointer;
+
+    &.active {
+        cursor: ew-resize;
+    }
+}
+
+.ui-color-field {
+    @extend .noSelect;
+
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    cursor: pointer;
+    overflow: hidden;
+    transition: opacity 100ms;
+    background-image:
+        linear-gradient(45deg, #000 25%, transparent 25%),
+        linear-gradient(-45deg, #000 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #000 75%),
+        linear-gradient(-45deg, transparent 75%, #000 75%);
+    background-color: #fff;
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 0, 4px -4px, 0 4px;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+        cursor: default;
+    }
+
+    &::after {
+        content: '\00a0';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        border-top: 1px solid #666;
+    }
+}
+
+.ui-image-field {
+    @extend .noSelect;
+
+    position: relative;
+    width: 66px;
+    height: 66px;
+    box-sizing: border-box;
+    overflow: hidden;
+    cursor: pointer;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+        cursor: default;
+    }
+
+    &::after {
+        content: '\00a0';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 7px;
+        height: 7px;
+        border-top: 1px solid #666;
+        border-left: 1px solid #666;
+    }
+}
+
+.ui-button {
+    @extend .noSelect;
+
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 0 8px;
+    line-height: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 100ms;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+        cursor: default;
+    }
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.ui-checkbox {
+    display: inline-block;
+    vertical-align: text-bottom;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 100ms;
+    flex-shrink: 0;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+        cursor: default;
+    }
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.ui-select-field {
+    position: relative;
+    display: inline-block;
+    width: 114px;
+    line-height: 22px;
+    box-sizing: border-box;
+    padding: 0 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: opacity 100ms;
+
+    &:focus {
+        outline: none;
+    }
+
+    &.disabled {
+        opacity: $disabled-opacity;
+        cursor: default;
+    }
+}
+
+.ui-code {
+    @extend %field-font;
+
+    display: block;
+    margin: 0;
+    padding: 4px;
+    font-size: 10px;
+    overflow: auto;
+    transition: opacity 100ms;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+        cursor: default;
+    }
+}
+
+.ui-progress {
+    width: 128px;
+    height: 4px;
+    transition: opacity 100ms;
+
+    &.disabled {
+        opacity: $disabled-opacity;
+    }
+}
+
+.hidden {
+    display: none;
+}

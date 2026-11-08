@@ -1,0 +1,580 @@
+@use 'sass:color';
+
+body {
+    color: $text-secondary;
+    background-color: $bcg-darker;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: $bcg-darkest;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $text-darkest;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: $text-active;
+}
+
+::-webkit-scrollbar-corner {
+    background: $bcg-dark;
+}
+
+::selection {
+    color: $text-active;
+    background-color: $bcg-darkest;
+}
+
+a {
+    color: $text-active;
+    text-decoration: none;
+}
+
+a:hover {
+    color: color.scale(color.adjust($text-active, $lightness: 10%), $saturation: 10%);
+    text-decoration: underline;
+}
+
+a:visited {
+    color: $text-active;
+}
+
+%ui-flash {
+    outline: 1px solid $text-active;
+    animation: ui-flash-animation 200ms ease-in-out forwards;
+}
+
+.ui-panel {
+    background-color: $bcg-primary;
+
+    &.disabled {
+        > header {
+            background-color: color.mix($bcg-dark, $bcg-primary, 60%);
+        }
+    }
+
+    > header {
+        @extend %font-bold;
+
+        background-color: $bcg-darker;
+        color: $text-primary;
+        font-size: 12px;
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-overlay {
+    > .content {
+        background-color: $bcg-primary;
+    }
+}
+
+.ui-tooltip,
+.pcui-tooltip {
+    padding: 0;
+
+    &.flip {
+        &.align-top,
+        &.align-bottom {
+            margin-left: auto;
+            margin-right: -16px;
+
+            > .arrow {
+                left: auto;
+                right: 8px;
+            }
+        }
+    }
+
+    &.align-top {
+        margin-left: -16px;
+
+        > .inner {
+            margin-top: 8px;
+        }
+
+        > .arrow {
+            top: -8px;
+            left: 8px;
+            border-bottom-color: color.mix($bcg-darkest, #000, 75%);
+        }
+    }
+
+    &.align-right {
+        margin-top: -16px;
+
+        > .inner {
+            margin-right: 8px;
+        }
+
+        > .arrow {
+            top: 8px;
+            right: -8px;
+            border-left-color: color.mix($bcg-darkest, #000, 75%);
+        }
+    }
+
+    &.align-bottom {
+        margin-left: -16px;
+
+        > .inner {
+            margin-bottom: 8px;
+        }
+
+        > .arrow {
+            bottom: -8px;
+            left: 8px;
+            border-top-color: color.mix($bcg-darkest, #000, 75%);
+        }
+    }
+
+    &.align-left {
+        margin-top: -16px;
+
+        > .inner {
+            margin-left: 8px;
+        }
+
+        > .arrow {
+            top: 8px;
+            left: -8px;
+            border-right-color: color.mix($bcg-darkest, #000, 75%);
+        }
+    }
+
+    > .inner {
+        padding: 0 16px;
+        line-height: 32px;
+        font-size: 14px;
+        background-color: color.mix($bcg-darkest, #000, 75%);
+        color: $text-primary;
+    }
+
+    > .arrow {
+        width: 0;
+        height: 0;
+        position: absolute;
+        border: 8px solid transparent;
+    }
+
+    &.inactive {
+        > .inner {
+            color: $text-darkest;
+        }
+    }
+}
+
+.ui-list {
+    background-color: $bcg-dark;
+    border-color: $bcg-darker;
+    margin: $field-padding;
+
+    &.flash {
+        @extend %ui-flash;
+    }
+
+    &.selectable {
+        > .ui-list-item {
+            &:hover {
+                color: $text-primary;
+                background-color: $bcg-darkest;
+                border-color: $bcg-darkest;
+                position: relative;
+                z-index: 1;
+            }
+        }
+    }
+}
+
+.ui-list-item {
+    border-color: $bcg-darker;
+    color: $text-secondary;
+
+    &.selected {
+        color: $text-primary;
+        background-color: $bcg-darker;
+    }
+}
+
+.ui-label {
+    color: $text-secondary;
+    margin: $field-padding;
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-label[placeholder] {
+    &::after {
+        color: $text-darkest;
+        background-color: transparent;
+    }
+}
+
+.ui-slider {
+    margin: $field-padding;
+
+    &.disabled {
+        cursor: default;
+    }
+}
+
+.ui-text-field {
+    border: 1px solid $bcg-darker;
+    background-color: $bcg-dark;
+    margin: $field-padding;
+
+    > input.field {
+        color: $text-secondary;
+    }
+
+    &.active,
+    &:hover,
+    &:focus,
+    &.focus {
+        border-color: $bcg-darkest;
+        background-color: $bcg-darkest;
+    }
+
+    > input.field:focus,
+    > input.field:hover {
+        box-shadow: none;
+        color: $text-primary;
+        outline: none;
+        border: none;
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-text-field[placeholder] {
+    &::after {
+        color: $text-darkest;
+        background-color: $bcg-dark;
+    }
+}
+
+.ui-textarea-field {
+    border: 1px solid $bcg-darker;
+    background-color: $bcg-dark;
+    margin: $field-padding;
+
+    > textarea.field {
+        color: $text-secondary;
+    }
+
+    &.active,
+    &:hover,
+    &:focus,
+    &.focus {
+        border-color: $bcg-darkest;
+        background-color: $bcg-darkest;
+    }
+
+    > textarea.field:focus,
+    > textarea.field:hover {
+        box-shadow: none;
+        color: $text-primary;
+        outline: none;
+        border: none;
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-textarea-field[placeholder] {
+    &::after {
+        color: $text-darkest;
+        background-color: $bcg-dark;
+    }
+}
+
+.ui-color-field {
+    border: 2px solid $bcg-dark;
+    margin: $field-padding;
+    width: 42px;
+    height: 20px;
+
+    &::after {
+        width: 0;
+        height: 0;
+        background-color: transparent;
+        border: none;
+        border-bottom: 12px solid $bcg-dark;
+        border-left: 12px solid transparent;
+    }
+
+    &:hover,
+    &:focus {
+        outline: 1px solid $bcg-darkest;
+        border-color: $bcg-darkest;
+        box-shadow: none;
+
+        &::after {
+            border-bottom: 12px solid $bcg-darkest;
+        }
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-image-field {
+    content: '';
+    border: 1px solid $bcg-darker;
+    margin: $field-padding;
+
+    &::after {
+        background-color: $bcg-darker;
+        border-color: $bcg-darker;
+    }
+
+    &:hover,
+    &:focus {
+        background-color: $bcg-darkest;
+        border-color: $bcg-darkest;
+        outline: 1px solid $bcg-darkest;
+        box-shadow: none;
+
+        &::after {
+            background-color: $bcg-darkest;
+        }
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-number-field {
+    border: 1px solid $bcg-darker;
+    background-color: $bcg-dark;
+    margin: $field-padding;
+
+    > input.field {
+        color: $text-secondary;
+    }
+
+    &.active,
+    &:hover,
+    &:focus,
+    &.focus {
+        border-color: $bcg-darkest;
+        background-color: $bcg-darkest;
+    }
+
+    > input.field:focus,
+    > input.field:hover {
+        box-shadow: none;
+        color: $text-primary;
+        outline: none;
+        border: none;
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-number-field[placeholder] {
+    &::after {
+        color: $text-darkest;
+        background-color: $bcg-dark;
+    }
+}
+
+.ui-number-field[proxy] {
+    &::after {
+        color: $text-secondary;
+        background-color: $bcg-dark;
+    }
+}
+
+.ui-curve-field {
+    border: 1px solid $bcg-darker;
+    background-color: $bcg-dark;
+    margin: $field-padding;
+
+    &.active,
+    &:hover,
+    &:focus {
+        border-color: $text-primary;
+        outline: 1px solid $text-primary;
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-checkbox {
+    position: relative;
+    border: none;
+    border: 1px solid $bcg-darker;
+    background-color: $bcg-dark;
+    width: 28px;
+    height: 16px;
+    margin: $field-padding;
+    margin-top: 7px;
+
+    &:hover,
+    &:focus {
+        border-color: $bcg-darkest;
+        background-color: $bcg-darkest;
+
+        &.component-toggle::after {
+            background-color: $error-secondary;
+        }
+    }
+
+    &::after {
+        content: '\00a0';
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        width: 12px;
+        height: 12px;
+        border-radius: 6px;
+        background-color: $text-darkest;
+        transition: left 100ms ease, background-color 100ms ease;
+    }
+
+    &.checked {
+        border-color: $bcg-darker;
+        background-color: $bcg-dark;
+
+        &.component-toggle::after {
+            left: 15px;
+            background-color: color.mix($text-darkest, #7f7, 50%);
+        }
+
+        &.component-toggle:hover,
+        &.component-toggle:focus {
+            border-color: $bcg-darkest;
+            background-color: $bcg-darkest;
+
+            &::after {
+                background-color: #7f7;
+            }
+        }
+    }
+
+    &.null {
+        &::after {
+            left: 8px;
+            background-color: rgba($text-dark, 0.25);
+        }
+
+        &:hover,
+        &:focus {
+            &::after {
+                background-color: rgba($text-dark, 0.5);
+            }
+        }
+    }
+
+    &.component-toggle {
+        border-radius: 8px;
+    }
+}
+
+.ui-select-field {
+    border: 1px solid $bcg-darker;
+    background-color: $bcg-dark;
+    margin: $field-padding;
+
+    &:hover,
+    &:focus {
+        border-color: $bcg-darkest;
+        background-color: $bcg-darkest;
+    }
+
+    &.flash {
+        @extend %ui-flash;
+    }
+}
+
+.ui-button {
+    border: 1px solid $bcg-darker;
+    background-color: $bcg-dark;
+    color: $text-secondary;
+    margin: $field-padding;
+
+    &:hover,
+    &:focus {
+        color: $text-primary;
+        border-color: $bcg-darkest;
+        background-color: $bcg-darkest;
+    }
+}
+
+.ui-code {
+    color: $text-active;
+    background-color: $bcg-darkest;
+}
+
+.ui-progress {
+    background-color: $bcg-darkest;
+}
+
+// ui-text-field changed animation
+@keyframes ui-flash-animation {
+    from { outline-color: $text-active; }
+    to { outline-color: rgba($text-active, 0); }
+}
+
+.picker-color {
+    > .content {
+        border: 1px solid $bcg-darkest;
+        background-color: $bcg-dark;
+
+        > .pick-rect,
+        > .pick-hue,
+        > .pick-opacity {
+            border: 1px solid $bcg-darker;
+        }
+
+        > .fields {
+            background-color: $bcg-primary;
+        }
+    }
+}
+
+.picker-curve > .content {
+    border: 1px solid $bcg-darkest;
+    background-color: $bcg-dark;
+}
+
+.picker-gradient {
+    > .content {
+        border: 1px solid $bcg-darkest;
+        background-color: $bcg-dark;
+
+        > .picker-gradient-panel > .color-panel.pcui-container {
+            > .color-rect,
+            > .hue-rect,
+            > .alpha-rect {
+                border: 1px solid $bcg-darker;
+            }
+
+            > .fields {
+                background-color: $bcg-primary;
+            }
+        }
+    }
+}

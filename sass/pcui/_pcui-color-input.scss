@@ -1,0 +1,18 @@
+// color input: pcui provides the layout and states; this adds the swatch backdrop and checkerboard
+.pcui-color-input {
+    @extend .noSelect;
+
+    // restated after pcui so it beats the 1px margin pcui gives array input items
+    margin: $element-margin;
+
+    > div {
+        background-color: #000;
+    }
+
+    // checkerboard pattern
+    @include checkerboard(#fff, black, calc(44px / 5));
+}
+
+.pcui-color-input.pcui-multiple-values {
+    @include checkerboard(#465659, #5b696c, calc(44px / 5));
+}

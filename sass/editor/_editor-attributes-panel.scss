@@ -1,0 +1,339 @@
+.pcui-panel.attributes {
+    &.pcui-collapsible.pcui-panel-horizontal {
+        &.pcui-collapsed {
+            > .pcui-panel-header {
+                overflow: visible;
+                text-overflow: normal;
+
+                > .inspector-controls {
+                    display: none;
+                }
+            }
+        }
+    }
+
+    > .pcui-panel-header {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-transform: uppercase;
+    }
+
+    > .pcui-panel-content {
+        background-color: $bcg-primary;
+    }
+
+    &.asset-preview {
+        &.large {
+            .asset-preview-container {
+                padding-top: 100%;
+            }
+        }
+
+        .asset-preview-container {
+            position: relative;
+            background-color: $bcg-darker;
+            height: 0;
+            padding-top: 45%;
+
+            > .asset-preview {
+                @extend .noSelect;
+                @include asset-preview-canvas;
+
+                max-height: 500px;
+            }
+        }
+    }
+
+    .ui-panel {
+        .ui-label.label-field {
+            @extend .noSelect;
+
+            flex-shrink: 0;
+            width: 27%;
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .add-entity {
+            position: relative;
+            font-size: 12px;
+            font-family: inconsolatamedium;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 20px;
+            padding-left: 8px;
+            height: 22px;
+            line-height: 22px;
+            background-color: $bcg-dark;
+
+            &.null {
+                color: $text-darkest;
+            }
+
+            &:hover {
+                cursor: pointer;
+                background-color: $bcg-darkest;
+                color: $text-primary;
+            }
+        }
+    }
+
+    .ui-panel.component {
+        outline: none;
+
+        > :is(header, .ui-header) {
+            text-transform: uppercase;
+        }
+
+        &.entity {
+            > :is(header, .ui-header) {
+                border-top: 1px solid $bcg-dark;
+
+                > .title {
+                    &::before {
+                        content: '\E243';
+
+                        @extend .font-icon;
+
+                        font-size: 14px;
+                        float: left;
+                        width: 24px;
+                        margin-right: 4px;
+                        line-height: 32px;
+                        text-align: center;
+                        color: $text-active;
+                    }
+                }
+
+                > .component-toggle-label {
+                    float: right;
+                    margin: 0 8px 0 0;
+                    line-height: 32px;
+                }
+
+                > .ui-checkbox.component-toggle {
+                    float: right;
+                    width: 30px;
+                    height: 16px;
+                    margin: 7px 4px 0 0;
+                    background-color: $bcg-primary;
+                }
+
+                > .ui-button.component-remove {
+                    float: right;
+                    width: 32px;
+                    height: 32px;
+                    line-height: 32px;
+                    margin: 0;
+                    padding: 0;
+                    border: none;
+
+                    @extend .font-icon;
+
+                    font-size: 14px;
+                    text-align: center;
+                    background-color: transparent;
+
+                    &:hover {
+                        color: $error-secondary;
+                        background-color: #20292b;
+                    }
+
+                    &::after {
+                        content: '\E124';
+                        font-weight: 200;
+                    }
+                }
+            }
+
+            &.script > :is(header, .ui-header) > .title::before {
+                content: '\E236';
+            }
+        }
+
+        &.script {
+            > .content {
+                padding-top: 6px;
+            }
+        }
+
+        > .content {
+            padding: 8px 6px;
+
+            > .ui-button.add-script {
+                margin: 0 0 8px;
+                background-color: $bcg-dark;
+
+                &:hover {
+                    background-color: $bcg-darkest;
+
+                    &::before {
+                        color: $text-active;
+                    }
+                }
+
+                text-transform: uppercase;
+                font-size: 12px;
+                border: none;
+                position: relative;
+                height: 28px;
+                line-height: 30px;
+                padding-left: 28px;
+                width: 100%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+
+                @extend %font-bold;
+
+                &::before {
+                    position: absolute;
+                    top: 0;
+                    left: 8px;
+                    content: '\E120';
+
+                    @extend .font-icon;
+
+                    font-size: 14px;
+                    text-align: center;
+                }
+            }
+        }
+
+        .ui-panel.component-script {
+            border-top: 1px solid $bcg-darker;
+            border-left: 1px solid $bcg-darker;
+            border-right: 1px solid $bcg-darker;
+
+            &:last-child {
+                border-bottom: 1px solid $bcg-darker;
+            }
+
+            > .ui-header {
+                background-color: $bcg-dark;
+                overflow: hidden;
+                height: 32px;
+                line-height: 32px;
+
+                > .title {
+                    max-width: calc(100% - 128px);
+
+                    > .link {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        display: block;
+                        color: $text-active;
+                        cursor: pointer;
+
+                        &:hover {
+                            text-decoration: underline;
+                        }
+                    }
+                }
+
+                > .move-down,
+                > .move-up,
+                > .refresh,
+                > .remove {
+                    float: right;
+                    width: 32px;
+                    height: 32px;
+                    line-height: 32px;
+                    margin: 0;
+                    padding: 0;
+                    background-color: transparent;
+                    border: none;
+
+                    @extend .font-icon;
+
+                    font-size: 14px;
+                    text-align: center;
+
+                    &:hover {
+                        color: $text-active;
+                        background-color: #20292b;
+                    }
+                }
+
+                > .refresh {
+                    &::after {
+                        content: '\E128';
+                    }
+                }
+
+                > .move-up::after {
+                    content: '\E161';
+                }
+
+                > .move-down {
+                    &::after {
+                        content: '\E163';
+                    }
+                }
+
+                > .remove {
+                    &:hover {
+                        color: $error-secondary;
+                    }
+
+                    &::after {
+                        content: '\E124';
+                        font-weight: 200;
+                    }
+                }
+            }
+
+            > .content {
+                padding: 0 3px;
+            }
+        }
+    }
+}
+
+.pcui-container.inspector-controls {
+    overflow: hidden;
+
+    > .pcui-button {
+        float: right;
+        margin: 0;
+        width: 32px;
+        height: 32px;
+        border: none;
+        color: #9ba1a3;
+        font-size: 16px;
+        background-color: transparent;
+        border-radius: 0;
+
+        &:hover,
+        &:focus {
+            color: #fff;
+            background-color: $bcg-darkest;
+        }
+
+        &.back {
+            transform: rotate(180deg);
+        }
+    }
+}
+
+.collision-component-inspector,
+.joint-component-inspector,
+.rigidbody-component-inspector {
+    .library-warning {
+        background-color: $bcg-darkest;
+        border: 1px solid $error-secondary;
+        border-radius: 2px;
+        margin: 3px;
+        padding: 8px;
+    }
+
+    .library-warning-text {
+        color: $error-secondary;
+        flex-basis: 50%;
+        flex-shrink: 1;
+        font-size: 12px;
+    }
+}

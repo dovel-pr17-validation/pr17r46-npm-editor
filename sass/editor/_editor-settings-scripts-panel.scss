@@ -1,0 +1,19 @@
+.scripts-settings-panel-scripts-list-item {
+    background-color: $bcg-dark;
+
+    @include list-row-border;
+
+    .pcui-panel-header {
+        color: $text-active;
+        background-color: transparent;
+    }
+}
+
+.scripts-settings-panel-scripts-list-item:hover {
+    cursor: pointer;
+    background-color: $bcg-darkest;
+}
+
+.scripts-settings-panel-scripts-list-container {
+    margin: $element-margin;
+}

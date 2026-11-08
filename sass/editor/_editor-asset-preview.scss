@@ -1,0 +1,25 @@
+.pcui-asset-preview-container {
+    position: relative;
+    background-color: $bcg-darker;
+    height: 0;
+    padding-top: 45%;
+}
+
+.pcui-asset-preview-container-large {
+    padding-top: 100%;
+}
+
+.pcui-asset-preview-canvas {
+    @include asset-preview-canvas;
+}
+
+.pcui-asset-preview-canvas-flip {
+    transform: scale(1, -1);
+}
+
+.pcui-asset-preview-label-no-preview {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
